@@ -5,6 +5,13 @@ import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+
+/** Classe responsavel pelas configuraçõe de registro da url do banco h2
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
 @Configuration
 public class WebConfiguration {
     @Bean

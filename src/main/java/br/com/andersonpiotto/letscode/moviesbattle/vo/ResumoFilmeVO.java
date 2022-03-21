@@ -1,6 +1,16 @@
 package br.com.andersonpiotto.letscode.moviesbattle.vo;
 
+import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeAvaliadoDTO;
+import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeDTO;
 import lombok.Data;
+
+
+/** Classe que representa um View Object para Filmes
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
 
 @Data
 public class ResumoFilmeVO {
@@ -18,6 +28,14 @@ public class ResumoFilmeVO {
 		this.ano = ano;
 		this.imdbID = imdbID;
 		this.poster = poster;
+	}
+	
+	public static ResumoFilmeVO criaResumoFilmeVO(FilmeDTO primeiroFilme) {
+		return new ResumoFilmeVO(primeiroFilme.getTitulo(), primeiroFilme.getAno(), primeiroFilme.getImdbID(), primeiroFilme.getPoster());
+	}
+	
+	public static ResumoFilmeVO criaResumoFilmeVO(FilmeAvaliadoDTO filmeAvaliado) {
+		return new ResumoFilmeVO(filmeAvaliado.getTitulo(), filmeAvaliado.getAno(), filmeAvaliado.getImdbID(), filmeAvaliado.getPoster());
 	}
 
 	public String getTitulo() {

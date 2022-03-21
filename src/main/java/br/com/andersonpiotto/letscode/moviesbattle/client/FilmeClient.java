@@ -11,8 +11,15 @@ import org.springframework.web.client.RestTemplate;
 
 import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeAvaliadoDTO;
 import br.com.andersonpiotto.letscode.moviesbattle.dto.ListFilmesDTO;
+import br.com.andersonpiotto.letscode.moviesbattle.exception.FilmeNaoEncontradoException;
 import br.com.andersonpiotto.letscode.moviesbattle.exception.IntegracaoException;
 
+/** Classe que representa um client de filmes
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
 @Component
 public class FilmeClient {
 	
@@ -31,13 +38,13 @@ public class FilmeClient {
 			ListFilmesDTO filmes = result.getBody();
 			
 			if (! filmes.getResponse()) {
-				throw new IntegracaoException("Ocorreu um erro na integração com o serviço de filmes");
+				throw new IntegracaoException("Nenhum filme encontrado com o tema " + temaFilme);
 			}
 			
 			return filmes;
 			
-		} catch (URISyntaxException e) {
-			throw new IntegracaoException("Ocorreu um erro na integração com o serviço de filmes");
+		} catch (Exception e) {
+			throw new IntegracaoException("Ocorreu um erro na integração com o serviço de filmes: " + e.getMessage());
 		}
 	}
 	

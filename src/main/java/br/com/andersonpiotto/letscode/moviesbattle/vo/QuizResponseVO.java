@@ -1,5 +1,11 @@
 package br.com.andersonpiotto.letscode.moviesbattle.vo;
 
+/** Classe que representa um View Object para quiz
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
 public class QuizResponseVO {
 
 	private ResumoFilmeVO primeiroFilme;

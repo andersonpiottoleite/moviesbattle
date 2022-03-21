@@ -5,6 +5,12 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
+/** Classe que representa uma entidade resposta
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
 @Entity
 public class Resposta {
 	

@@ -8,6 +8,13 @@ import org.springframework.stereotype.Repository;
 import br.com.andersonpiotto.letscode.moviesbattle.model.Quiz;
 import br.com.andersonpiotto.letscode.moviesbattle.model.Usuario;
 
+
+/** Interface que configura um repository de <code>Quiz</code>
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
 @Repository
 public interface QuizRepository extends CrudRepository<Quiz, Long>{
 	

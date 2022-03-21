@@ -5,6 +5,13 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** Classe que representa um Data Tranfer Object para uma lista de Filmes
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
+
 public class ListFilmesDTO {
 
 	@JsonProperty("Search")

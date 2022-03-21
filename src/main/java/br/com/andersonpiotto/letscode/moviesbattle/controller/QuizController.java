@@ -17,6 +17,13 @@ import br.com.andersonpiotto.letscode.moviesbattle.vo.QuizResponseVO;
 import br.com.andersonpiotto.letscode.moviesbattle.vo.RankeadoVO;
 import io.swagger.annotations.ApiOperation;
 
+
+/** Classe que representa um controller de quiz
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
 @RestController
 @RequestMapping("/quiz")
 public class QuizController {

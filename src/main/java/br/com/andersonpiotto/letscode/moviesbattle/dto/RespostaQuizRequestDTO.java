@@ -1,5 +1,12 @@
 package br.com.andersonpiotto.letscode.moviesbattle.dto;
 
+/** Classe que representa um Data Tranfer Object para resposta de fimles
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
+
 public class RespostaQuizRequestDTO {
 
 	private Long idPergunta;

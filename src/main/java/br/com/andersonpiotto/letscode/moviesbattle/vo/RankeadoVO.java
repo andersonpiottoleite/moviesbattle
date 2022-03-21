@@ -1,11 +1,18 @@
 package br.com.andersonpiotto.letscode.moviesbattle.vo;
 
+
+/** Classe que representa um View Object para ranking
+ * 
+ * @author Anderson Piotto
+ * @version 1.0.0
+ * @since 19/03/2022
+ */
 public class RankeadoVO {
 
 	private String nome;
 	private int posicaoRanking;
 	private int quantidadeDeQuizesRespondidos;
-	private double porcentagemAcerto;
+	private double pontuacao;
 
 	public String getNome() {
 		return nome;
@@ -31,12 +38,12 @@ public class RankeadoVO {
 		this.quantidadeDeQuizesRespondidos = quantidadeDeQuizesRespondidos;
 	}
 
-	public double getPorcentagemAcerto() {
-		return porcentagemAcerto;
+	public double getPontuacao() {
+		return pontuacao;
 	}
 
-	public void setPorcentagemAcerto(double porcentagemAcerto) {
-		this.porcentagemAcerto = porcentagemAcerto;
+	public void setPontuacao(double pontuacao) {
+		this.pontuacao = pontuacao;
 	}
 
 }
