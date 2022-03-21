@@ -49,6 +49,20 @@ public class QuizBusinessObject {
 	@Autowired
 	private UsuarioRepository usuarioRepository;
 	
+	/** Construtor usado para testes
+	 * 
+	 * @param filmeClient
+	 * @param quizRepository
+	 * @param usuarioRepository
+	 */
+	public QuizBusinessObject(FilmeClientImpl filmeClient, QuizRepository quizRepository, UsuarioRepository usuarioRepository) {
+		this.filmeClient = filmeClient;
+		this.quizRepository = quizRepository;
+		this.usuarioRepository = usuarioRepository;
+	}
+
+	public QuizBusinessObject() {}
+
 	public List<FilmeDTO> getFilmesAleatorios(String temaFilme) {
 		ListFilmesDTO filmes = filmeClient.getFilmes(temaFilme);
 		

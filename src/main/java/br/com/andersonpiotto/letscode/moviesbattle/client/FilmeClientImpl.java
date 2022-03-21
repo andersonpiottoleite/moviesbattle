@@ -29,6 +29,16 @@ public class FilmeClientImpl implements FilmeClient{
 	@Autowired
 	private RestTemplate restTemplate;
 	
+	/** Construtor usado para testes
+	 * 
+	 * @param restTemplate
+	 */
+	public FilmeClientImpl(RestTemplate restTemplate) {
+		this.restTemplate = restTemplate;
+	}
+	
+	public FilmeClientImpl() {}
+
 	@Override
 	public ListFilmesDTO getFilmes(String temaFilme){
 		URI uri;

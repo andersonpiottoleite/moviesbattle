@@ -24,6 +24,17 @@ public class UsuarioServiceImpl implements UsuarioService {
 	
 	@Autowired
 	private UsuarioRepository usuarioRepository;
+	
+	public UsuarioServiceImpl() {}
+
+	/** Construtor usado para testes
+	 * 
+	 * @param usuarioRepository
+	 */
+	public UsuarioServiceImpl(UsuarioRepository usuarioRepository) {
+		super();
+		this.usuarioRepository = usuarioRepository;
+	}
 
 	@Override
 	public UsuarioVO cria(UsuarioDTO usuarioDTO) {
@@ -34,6 +45,7 @@ public class UsuarioServiceImpl implements UsuarioService {
 		return new UsuarioVO(usuario.getUsername(), usuario.getToken());
 	}
 
+	//TODO pode ser melhorado usando o mecanismo de autenticacao do SpringSecurity
 	@Override
 	public void autentica(String token) {
 		Usuario usuario = usuarioRepository.findByToken(token);

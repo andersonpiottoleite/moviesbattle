@@ -44,13 +44,31 @@ public class QuizServiceImpl implements QuizService {
 	private QuizRepository quizRepository;
 	
 	@Autowired
-	private UsuarioServiceImpl usuarioServiceImpl;
+	private UsuarioServiceImpl usuarioService;
 	
 	@Autowired
 	private PerguntaRepository perguntaRepository;
 	
 	@Autowired
 	private FilmeClientImpl filmeClient;
+	
+	/** Construtor usado para testes
+	 * 
+	 * @param quizBusinessObject
+	 * @param quizRepository
+	 * @param usuarioService
+	 * @param perguntaRepository
+	 * @param filmeClient
+	 */
+	public QuizServiceImpl(QuizBusinessObject quizBusinessObject, QuizRepository quizRepository, UsuarioServiceImpl usuarioService, PerguntaRepository perguntaRepository, FilmeClientImpl filmeClient) {
+		this.quizBusinessObject = quizBusinessObject;
+		this.quizRepository = quizRepository;
+		this.usuarioService = usuarioService;
+		this.perguntaRepository = perguntaRepository;
+		this.filmeClient = filmeClient;
+	}
+
+	public QuizServiceImpl() {}
 
 	@Override
 	@Transactional
@@ -72,7 +90,7 @@ public class QuizServiceImpl implements QuizService {
 	
 	private Quiz criaQuiz(FilmeDTO primeiroFilme, FilmeDTO segundoFilme, String token) {
 		
-		Usuario usuario = usuarioServiceImpl.buscaPorToken(token);
+		Usuario usuario = usuarioService.buscaPorToken(token);
 		
 		Quiz quiz = new Quiz(usuario);
 		
@@ -93,7 +111,7 @@ public class QuizServiceImpl implements QuizService {
 	
 	@Override
 	@Transactional
-	public void responder(RespostaQuizRequestDTO respostaQuizRequest, String token) {
+	public Quiz responder(RespostaQuizRequestDTO respostaQuizRequest, String token) {
 		LOGGER.info("Repondendo pergunta...");
 		
 		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(respostaQuizRequest.getIdQuiz(), token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado"));
@@ -112,9 +130,11 @@ public class QuizServiceImpl implements QuizService {
 		
 		quizBusinessObject.verificaRespostaCorreta(quiz, melhorFilmeAvaliado, pergunta, resposta);
 		
-		quizRepository.save(quiz);
+		Quiz quizRespondido = quizRepository.save(quiz);
 		
 		LOGGER.info("Pergunta respondida com sucesso!");
+		
+		return quizRespondido;
 		
 	}
 
@@ -164,14 +184,18 @@ public class QuizServiceImpl implements QuizService {
 	}
 	
 	@Override
-	public void encerrar(Long idQuiz, String token) {
+	public Quiz encerrar(Long idQuiz, String token) {
 		LOGGER.info("Encerrando Quiz...");
 		
 		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(idQuiz, token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado"));
 		quiz.encerra();
-		quizRepository.save(quiz);
+		
+		Quiz quizEncerrado = quizRepository.save(quiz);
 		
 		LOGGER.info("Quiz encerrado com sucesso!");
+		
+		return quizEncerrado;
+		
 	}
 
 	@Override

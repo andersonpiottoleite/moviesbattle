@@ -1,8 +1,21 @@
 package br.com.andersonpiotto.letscode.moviesbattle.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
+import br.com.andersonpiotto.letscode.moviesbattle.dto.UsuarioDTO;
+import br.com.andersonpiotto.letscode.moviesbattle.exception.AutenticationException;
+import br.com.andersonpiotto.letscode.moviesbattle.model.Usuario;
+import br.com.andersonpiotto.letscode.moviesbattle.repository.UsuarioRepository;
+import br.com.andersonpiotto.letscode.moviesbattle.vo.UsuarioVO;
 
 /**
  * Classe de testes para <code>UsuarioServiceImpl</code>
@@ -12,64 +25,66 @@ import org.junit.jupiter.api.Test;
  * @since 21/03/2022
  */
 
+@DataJpaTest
 class UsuarioServiceImplTest {
 
+	private UsuarioServiceImpl usuarioService;
+
+	@Autowired
+	private UsuarioRepository usuarioRepository;
+
+	@BeforeEach
+	void antesDeCadaTeste() {
+		usuarioService = new UsuarioServiceImpl(usuarioRepository);
+	}
+
 	@Test
-	void test() {
-		fail("Not yet implemented");
+	void deveCriarUmUsuario() {
+		UsuarioVO usuarioCriado = criaUsuario();
+
+		assertNotNull(usuarioCriado);
+		assertNotNull(usuarioCriado.getToken());
+
+	}
+
+	@Test
+	void deveAutenticarUmUsuarioCadastrado() {
+		assertDoesNotThrow(() -> {
+			UsuarioVO usuarioCriado = criaUsuario();
+			usuarioService.autentica(usuarioCriado.getToken());
+		});
+
+	}
+
+	@Test
+	void naoDeveAutenticarUmUsuarioInexistente() {
+		Exception exception = assertThrows(AutenticationException.class, () -> {
+			usuarioService.autentica("token de usuario inexistente");
+		});
+
+		String expectedMessage = "Usuario não cadastrado";
+		String actualMessage = exception.getMessage();
+
+		assertTrue(actualMessage.contains(expectedMessage));
+
+	}
+	
+	@Test
+	void deveBuscarUmUsuarioPeloToken() {
+		UsuarioVO usuarioCriado = criaUsuario();
+		Usuario usuarioBuscadoPorToken = usuarioService.buscaPorToken(usuarioCriado.getToken());
+		
+		assertNotNull(usuarioBuscadoPorToken);
+		assertEquals(usuarioCriado.getToken(), usuarioBuscadoPorToken.getToken());
+		assertEquals(usuarioCriado.getUsername(), usuarioBuscadoPorToken.getUsername());
+
+	}
+
+	private UsuarioVO criaUsuario() {
+		UsuarioDTO usuarioDTO = new UsuarioDTO();
+		usuarioDTO.setUsername("Anderson Piotto");
+		UsuarioVO usuarioCriado = usuarioService.cria(usuarioDTO);
+		return usuarioCriado;
 	}
 
 }
-
-//
-//
-//package br.com.andersonpiotto.letscode.moviesbattle.service;
-//
-//import java.util.Objects;
-//
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Service;
-//
-//import br.com.andersonpiotto.letscode.moviesbattle.config.JwtTokenUtil;
-//import br.com.andersonpiotto.letscode.moviesbattle.dto.UsuarioDTO;
-//import br.com.andersonpiotto.letscode.moviesbattle.exception.AutenticationException;
-//import br.com.andersonpiotto.letscode.moviesbattle.model.Usuario;
-//import br.com.andersonpiotto.letscode.moviesbattle.repository.UsuarioRepository;
-//import br.com.andersonpiotto.letscode.moviesbattle.vo.UsuarioVO;
-//
-///**
-// * Classe que representa um service de <code>Usuario</code>
-// * 
-// * @author Anderson Piotto
-// * @version 1.0.0
-// * @since 20/03/2022
-// */
-//@Service
-//public class UsuarioServiceImpl implements UsuarioService {
-//	
-//	@Autowired
-//	private UsuarioRepository usuarioRepository;
-//
-//	@Override
-//	public UsuarioVO cria(UsuarioDTO usuarioDTO) {
-//		String token = new JwtTokenUtil().generateToken(usuarioDTO);
-//		Usuario usuario = new Usuario(usuarioDTO.getUsername(), token);
-//		usuario = usuarioRepository.save(usuario);
-//		
-//		return new UsuarioVO(usuario.getUsername(), usuario.getToken());
-//	}
-//
-//	@Override
-//	public void autentica(String token) {
-//		Usuario usuario = usuarioRepository.findByToken(token);
-//		if(Objects.isNull(usuario)) {
-//			throw new AutenticationException("Usuario não cadastrado");
-//		}
-//	}
-//	
-//	@Override
-//	public Usuario buscaPorToken(String token) {
-//		return usuarioRepository.findByToken(token);
-//	}
-//
-//}

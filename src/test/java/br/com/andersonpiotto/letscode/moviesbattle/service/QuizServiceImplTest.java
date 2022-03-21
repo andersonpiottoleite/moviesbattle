@@ -1,8 +1,30 @@
 package br.com.andersonpiotto.letscode.moviesbattle.service;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.web.client.RestTemplate;
+
+import br.com.andersonpiotto.letscode.moviesbattle.bo.QuizBusinessObject;
+import br.com.andersonpiotto.letscode.moviesbattle.client.FilmeClientImpl;
+import br.com.andersonpiotto.letscode.moviesbattle.dto.RespostaQuizRequestDTO;
+import br.com.andersonpiotto.letscode.moviesbattle.dto.UsuarioDTO;
+import br.com.andersonpiotto.letscode.moviesbattle.model.Quiz;
+import br.com.andersonpiotto.letscode.moviesbattle.repository.PerguntaRepository;
+import br.com.andersonpiotto.letscode.moviesbattle.repository.QuizRepository;
+import br.com.andersonpiotto.letscode.moviesbattle.repository.UsuarioRepository;
+import br.com.andersonpiotto.letscode.moviesbattle.vo.QuizResponseVO;
+import br.com.andersonpiotto.letscode.moviesbattle.vo.RankeadoVO;
+import br.com.andersonpiotto.letscode.moviesbattle.vo.UsuarioVO;
 
 
 /**
@@ -13,195 +35,243 @@ import org.junit.jupiter.api.Test;
  * @since 21/03/2022
  */
 
+@DataJpaTest
 class QuizServiceImplTest {
+	
+	private QuizServiceImpl quizService;
+	
+	@Autowired
+	private QuizRepository quizRepository;
+	
+	private QuizBusinessObject quizBusinessObject;
+	
+	private FilmeClientImpl filmeClient;
+	
+	@Autowired
+	private PerguntaRepository perguntaRepository;
+
+	@Autowired
+	private UsuarioRepository usuarioRepository;
+	
+	private UsuarioServiceImpl usuarioService;
+
+	@BeforeEach
+	void antesDeCadaTeste() {
+		usuarioService = new UsuarioServiceImpl(usuarioRepository);
+		
+		filmeClient = new FilmeClientImpl(new RestTemplate());
+		quizBusinessObject = new QuizBusinessObject(filmeClient, quizRepository, usuarioRepository);
+		quizService = new QuizServiceImpl(quizBusinessObject, quizRepository, usuarioService, perguntaRepository, filmeClient);
+	}
 
 	@Test
-	void test() {
-		fail("Not yet implemented");
+	void deveIniciarUmQuiz() {
+		
+		QuizResponseVO quizResponseVO = criaQuiz();
+		
+		assertNotNull(quizResponseVO);
+		
+		assertNotNull(quizResponseVO.getIdQuiz());
+		assertNotNull(quizResponseVO.getIdPergunta());
+		
+		assertNotNull(quizResponseVO.getPrimeiroFilme());
+		assertNotNull(quizResponseVO.getPrimeiroFilme().getImdbID());
+
+		assertNotNull(quizResponseVO.getSegundoFilme());
+		assertNotNull(quizResponseVO.getSegundoFilme().getImdbID());
+	}
+	
+	@Test
+	void deveResponderUmaPergunta() {
+		
+		UsuarioVO usuario = criaUsuario();
+		
+		QuizResponseVO quizResponseVO = criaQuiz(usuario);
+		
+		RespostaQuizRequestDTO respostaQuizRequestDTO = new RespostaQuizRequestDTO();
+		respostaQuizRequestDTO.setIdQuiz(quizResponseVO.getIdQuiz());
+		respostaQuizRequestDTO.setIdPergunta(quizResponseVO.getIdPergunta());
+		respostaQuizRequestDTO.setImdbIDRespondido(quizResponseVO.getPrimeiroFilme().getImdbID());
+		
+		Quiz quiz = quizService.responder(respostaQuizRequestDTO, usuario.getToken());
+		
+		assertNotNull(quiz.getId());
+		
+		boolean perguntaSemResposta = quiz.getPerguntas().stream().filter(p -> p.getResposta() == null).findAny().isPresent();
+		boolean perguntaNaoRespondida = quiz.getPerguntas().stream().filter(p -> ! p.isRespondida()).findAny().isPresent();
+		
+		assertFalse(perguntaSemResposta);
+		assertFalse(perguntaNaoRespondida);
+	}
+	
+	@Test
+	void naoDeveCriarUmaNovaPerguntaSeHouverPerguntaNaoRespondida() {
+		
+		Exception exception = assertThrows(IllegalStateException.class, () -> {
+			UsuarioVO usuario = criaUsuario();
+			
+			QuizResponseVO quizResponseVO = criaQuiz(usuario);
+			
+			String temaFilme = "Amor";
+			
+			quizService.novaPergunta(quizResponseVO.getIdQuiz(), temaFilme, usuario.getToken());
+		});
+
+		String expectedMessage = "Existe uma Pergunta pendente de resposta! Responda a Pergunta";
+		String actualMessage = exception.getMessage();
+
+		assertTrue(actualMessage.contains(expectedMessage));
+	}
+	
+	@Test
+	void naoDeveCriarUmaNovaPerguntaSeQuizEncerrado() {
+		
+		Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+			UsuarioVO usuario = criaUsuario();
+			
+			QuizResponseVO quizResponseVO = criaQuiz(usuario);
+			
+			quizService.encerrar(quizResponseVO.getIdQuiz(), usuario.getToken());
+			
+			String temaFilme = "Amor";
+			
+			quizService.novaPergunta(quizResponseVO.getIdQuiz(), temaFilme, usuario.getToken());
+		});
+
+		String expectedMessage = "Quiz Encerrado, abra um novo quiz";
+		String actualMessage = exception.getMessage();
+
+		assertTrue(actualMessage.contains(expectedMessage));
+	}
+	
+	@Test
+	void deveCriarUmaNovaPergunta() {
+		
+		UsuarioVO usuario = criaUsuario();
+		
+		QuizResponseVO quizResponseVO = criaQuiz(usuario);
+		
+		RespostaQuizRequestDTO respostaQuizRequestDTO = new RespostaQuizRequestDTO();
+		respostaQuizRequestDTO.setIdQuiz(quizResponseVO.getIdQuiz());
+		respostaQuizRequestDTO.setIdPergunta(quizResponseVO.getIdPergunta());
+		respostaQuizRequestDTO.setImdbIDRespondido(quizResponseVO.getPrimeiroFilme().getImdbID());
+		
+		quizService.responder(respostaQuizRequestDTO, usuario.getToken());
+		
+		String temaFilme = "Amor";
+		
+		QuizResponseVO quizResponseVOComNovaPergunta = quizService.novaPergunta(quizResponseVO.getIdQuiz(), temaFilme, usuario.getToken());
+		
+		assertNotNull(quizResponseVOComNovaPergunta.getIdPergunta());
+		assertFalse(quizResponseVO.getIdPergunta().equals(quizResponseVOComNovaPergunta.getIdPergunta()));
+	}
+	
+	@Test
+	void deveBuscarUmaPerguntaCriada() {
+		
+		UsuarioVO usuario = criaUsuario();
+		
+		QuizResponseVO quizResponseVO = criaQuiz(usuario);
+		
+		RespostaQuizRequestDTO respostaQuizRequestDTO = new RespostaQuizRequestDTO();
+		respostaQuizRequestDTO.setIdQuiz(quizResponseVO.getIdQuiz());
+		respostaQuizRequestDTO.setIdPergunta(quizResponseVO.getIdPergunta());
+		respostaQuizRequestDTO.setImdbIDRespondido(quizResponseVO.getPrimeiroFilme().getImdbID());
+		
+		quizService.responder(respostaQuizRequestDTO, usuario.getToken());
+		
+		String temaFilme = "Amor";
+		
+		QuizResponseVO quizResponseVOComNovaPergunta = quizService.novaPergunta(quizResponseVO.getIdQuiz(), temaFilme, usuario.getToken());
+		
+		assertNotNull(quizResponseVOComNovaPergunta.getIdPergunta());
+		
+		QuizResponseVO novaPerguntaConsultada = quizService.getPergunta(quizResponseVOComNovaPergunta.getIdPergunta());
+		
+		assertNotNull(novaPerguntaConsultada.getIdPergunta());
+	}
+	
+	@Test
+	void deveBuscarRanqueados() {
+		
+		// Primeiro usuario, com um quiz e com duas perguntas respondidas
+		UsuarioVO usuario = criaUsuario();
+		
+		QuizResponseVO quizResponseVO = criaQuiz(usuario);
+		
+		RespostaQuizRequestDTO respostaQuizRequestDTO = new RespostaQuizRequestDTO();
+		respostaQuizRequestDTO.setIdQuiz(quizResponseVO.getIdQuiz());
+		respostaQuizRequestDTO.setIdPergunta(quizResponseVO.getIdPergunta());
+		respostaQuizRequestDTO.setImdbIDRespondido(quizResponseVO.getPrimeiroFilme().getImdbID());
+		
+		quizService.responder(respostaQuizRequestDTO, usuario.getToken());
+		
+		String temaFilme = "Amor";
+		
+		QuizResponseVO quizResponseVOComNovaPergunta = quizService.novaPergunta(quizResponseVO.getIdQuiz(), temaFilme, usuario.getToken());
+		
+		assertNotNull(quizResponseVOComNovaPergunta.getIdPergunta());
+		
+		RespostaQuizRequestDTO respostaQuizRequestDTO2 = new RespostaQuizRequestDTO();
+		respostaQuizRequestDTO2.setIdQuiz(quizResponseVOComNovaPergunta.getIdQuiz());
+		respostaQuizRequestDTO2.setIdPergunta(quizResponseVOComNovaPergunta.getIdPergunta());
+		respostaQuizRequestDTO2.setImdbIDRespondido(quizResponseVOComNovaPergunta.getPrimeiroFilme().getImdbID());
+		
+		quizService.responder(respostaQuizRequestDTO2, usuario.getToken());
+		
+		
+		// Segundo usuario, com um quiz e com uma pergunta respondida
+		UsuarioVO usuario2 = criaUsuario();
+		
+		QuizResponseVO quizResponseVOUser2 = criaQuiz(usuario2);
+		
+		RespostaQuizRequestDTO respostaQuizRequestDTOUser2 = new RespostaQuizRequestDTO();
+		respostaQuizRequestDTOUser2.setIdQuiz(quizResponseVOUser2.getIdQuiz());
+		respostaQuizRequestDTOUser2.setIdPergunta(quizResponseVOUser2.getIdPergunta());
+		respostaQuizRequestDTOUser2.setImdbIDRespondido(quizResponseVOUser2.getPrimeiroFilme().getImdbID());
+		
+		quizService.responder(respostaQuizRequestDTOUser2, usuario2.getToken());
+		
+		// obterndo ranking
+		List<RankeadoVO> rankeados = quizService.getRankeados();
+		
+		assertNotNull(rankeados);
+		assertTrue(rankeados.size() == 2);
+	}
+	
+	@Test
+	void deveEncerrarUmQuiz() {
+		
+		UsuarioVO usuario = criaUsuario();
+		
+		QuizResponseVO quizResponseVO = criaQuiz(usuario);
+		
+		Quiz quiz = quizService.encerrar(quizResponseVO.getIdQuiz(), usuario.getToken());
+		
+		assertEquals(quiz.isEncerrado(), true);
+	}
+	
+	private UsuarioVO criaUsuario() {
+		UsuarioDTO usuarioDTO = new UsuarioDTO();
+		usuarioDTO.setUsername("Anderson Piotto");
+		UsuarioVO usuarioCriado = usuarioService.cria(usuarioDTO);
+		return usuarioCriado;
+	}
+	
+	private QuizResponseVO criaQuiz() {
+		UsuarioVO usuario = criaUsuario();
+		
+		String temaFilme = "Amor";
+		String token = usuario.getToken();
+		QuizResponseVO quizResponseVO = quizService.iniciar(temaFilme, token);
+		return quizResponseVO;
+	}
+	
+	private QuizResponseVO criaQuiz(UsuarioVO usuario) {
+		String temaFilme = "Amor";
+		String token = usuario.getToken();
+		QuizResponseVO quizResponseVO = quizService.iniciar(temaFilme, token);
+		return quizResponseVO;
 	}
 
 }
-
-//
-//package br.com.andersonpiotto.letscode.moviesbattle.service;
-//
-//import java.util.Comparator;
-//import java.util.List;
-//import java.util.NoSuchElementException;
-//
-//import javax.transaction.Transactional;
-//
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Service;
-//
-//import br.com.andersonpiotto.letscode.moviesbattle.bo.QuizBusinessObject;
-//import br.com.andersonpiotto.letscode.moviesbattle.client.FilmeClientImpl;
-//import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeAvaliadoDTO;
-//import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeDTO;
-//import br.com.andersonpiotto.letscode.moviesbattle.dto.RespostaQuizRequestDTO;
-//import br.com.andersonpiotto.letscode.moviesbattle.model.Pergunta;
-//import br.com.andersonpiotto.letscode.moviesbattle.model.Quiz;
-//import br.com.andersonpiotto.letscode.moviesbattle.model.Resposta;
-//import br.com.andersonpiotto.letscode.moviesbattle.model.Usuario;
-//import br.com.andersonpiotto.letscode.moviesbattle.repository.PerguntaRepository;
-//import br.com.andersonpiotto.letscode.moviesbattle.repository.QuizRepository;
-//import br.com.andersonpiotto.letscode.moviesbattle.vo.QuizResponseVO;
-//import br.com.andersonpiotto.letscode.moviesbattle.vo.RankeadoVO;
-//import br.com.andersonpiotto.letscode.moviesbattle.vo.ResumoFilmeVO;
-//
-///** Classe que representa um service de <code>Quiz</code>
-// * 
-// * @author Anderson Piotto
-// * @version 1.0.0
-// * @since 19/03/2022
-// */
-//@Service
-//public class QuizServiceImpl implements QuizService {
-//	
-//	private static Logger LOGGER = LoggerFactory.getLogger(QuizService.class);
-//	
-//	@Autowired
-//	private QuizBusinessObject quizBusinessObject;
-//	
-//	@Autowired
-//	private QuizRepository quizRepository;
-//	
-//	@Autowired
-//	private UsuarioServiceImpl usuarioServiceImpl;
-//	
-//	@Autowired
-//	private PerguntaRepository perguntaRepository;
-//	
-//	@Autowired
-//	private FilmeClientImpl filmeClient;
-//
-//	@Override
-//	@Transactional
-//	public QuizResponseVO iniciar(String temaFilme, String token) {
-//		LOGGER.info("Criando Quiz...");
-//		
-//		List<FilmeDTO> filmes = quizBusinessObject.getFilmesAleatorios(temaFilme);
-//		FilmeDTO primeiroFilme = filmes.get(0);
-//		FilmeDTO segundoFilme = filmes.get(1);
-//		
-//		Quiz quiz = criaQuiz(primeiroFilme, segundoFilme, token);
-//		
-//		quizRepository.save(quiz);
-//		
-//		LOGGER.info("Quiz criado com sucesso!");
-//
-//		return new QuizResponseVO(ResumoFilmeVO.criaResumoFilmeVO(primeiroFilme), ResumoFilmeVO.criaResumoFilmeVO(segundoFilme), quiz.getId(), quiz.getPerguntas().get(0).getId());
-//	}
-//	
-//	private Quiz criaQuiz(FilmeDTO primeiroFilme, FilmeDTO segundoFilme, String token) {
-//		
-//		Usuario usuario = usuarioServiceImpl.buscaPorToken(token);
-//		
-//		Quiz quiz = new Quiz(usuario);
-//		
-//		adicionaPergunta(primeiroFilme, segundoFilme, quiz);
-//		
-//		return quiz;
-//	}
-//
-//	private void adicionaPergunta(FilmeDTO primeiroFilme, FilmeDTO segundoFilme, Quiz quiz) {
-//		LOGGER.info("Adicionando pergunta no Quiz...");
-//		
-//		Pergunta pergunta = new Pergunta(primeiroFilme.getImdbID(), segundoFilme.getImdbID());
-//		quiz.addPergunta(pergunta);
-//		pergunta.setQuiz(quiz);
-//		
-//		LOGGER.info("Pergunta adicionada no Quiz!");
-//	}
-//	
-//	@Override
-//	@Transactional
-//	public void responder(RespostaQuizRequestDTO respostaQuizRequest, String token) {
-//		LOGGER.info("Repondendo pergunta...");
-//		
-//		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(respostaQuizRequest.getIdQuiz(), token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado"));
-//		
-//		Pergunta pergunta = perguntaRepository.findById(respostaQuizRequest.getIdPergunta()).orElseThrow(() -> new IllegalArgumentException("Pergunta não encontrada"));
-//		
-//		quizBusinessObject.validaCondicoesResposta(respostaQuizRequest, quiz, pergunta);
-//		
-//		FilmeAvaliadoDTO filmeAvaliado1 = filmeClient.getFilmesPorImdbID(pergunta.getPrimeiraOpcaoImdbID());
-//		FilmeAvaliadoDTO filmeAvaliado2 = filmeClient.getFilmesPorImdbID(pergunta.getSegundaOpcaoImdbID());
-//		
-//		FilmeAvaliadoDTO melhorFilmeAvaliado = quizBusinessObject.getMelhorAvaliado(filmeAvaliado1, filmeAvaliado2);
-//		
-//		Resposta resposta = new Resposta();
-//		resposta.setImdbIDRespondido(respostaQuizRequest.getImdbIDRespondido());
-//		
-//		quizBusinessObject.verificaRespostaCorreta(quiz, melhorFilmeAvaliado, pergunta, resposta);
-//		
-//		quizRepository.save(quiz);
-//		
-//		LOGGER.info("Pergunta respondida com sucesso!");
-//		
-//	}
-//
-//	@Override
-//	public QuizResponseVO novaPergunta(Long idQuiz, String temaFilme, String token) {
-//		LOGGER.info("Criando nova pergunta no Quiz...");
-//		
-//		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(idQuiz, token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado"));
-//		
-//		quizBusinessObject.validaCondicoesNovaPergunta(quiz);
-//				
-//		List<FilmeDTO> filmes = null;
-//		FilmeDTO primeiroFilme = null;
-//		FilmeDTO segundoFilme = null;
-//		
-//		do {
-//			filmes = quizBusinessObject.getFilmesAleatorios(temaFilme);
-//			primeiroFilme = filmes.get(0);
-//			segundoFilme = filmes.get(1);
-//			
-//		} while(quizBusinessObject.combinacaoFilmesJaUsada(quiz, primeiroFilme, segundoFilme));
-//		
-//		adicionaPergunta(primeiroFilme, segundoFilme, quiz);
-//		
-//		quiz = quizRepository.save(quiz);
-//		
-//		Pergunta pergunta = quiz.getPerguntas().stream().max(Comparator.comparing(Pergunta::getId))
-//	      .orElseThrow(NoSuchElementException::new);
-//		
-//		LOGGER.info("Nova pergunta criada com sucesso!");
-//		
-//		return new QuizResponseVO(ResumoFilmeVO.criaResumoFilmeVO(primeiroFilme), ResumoFilmeVO.criaResumoFilmeVO(segundoFilme), quiz.getId(), pergunta.getId());
-//	}
-//
-//	@Override
-//	public QuizResponseVO getPergunta(Long idPergunta) {
-//		LOGGER.info("Pesquisando pergunta...");
-//		
-//		Pergunta pergunta = perguntaRepository.findById(idPergunta).orElseThrow(() -> new IllegalArgumentException("Pergunta não encontrada"));
-//		
-//		FilmeAvaliadoDTO filmeAvaliado1 = filmeClient.getFilmesPorImdbID(pergunta.getPrimeiraOpcaoImdbID());
-//		FilmeAvaliadoDTO filmeAvaliado2 = filmeClient.getFilmesPorImdbID(pergunta.getSegundaOpcaoImdbID());
-//		
-//		LOGGER.info("Pesquisa de pergunta realizada!");
-//		
-//		return new QuizResponseVO(ResumoFilmeVO.criaResumoFilmeVO(filmeAvaliado1), ResumoFilmeVO.criaResumoFilmeVO(filmeAvaliado2), pergunta.getQuiz().getId(), pergunta.getId());
-//	}
-//	
-//	@Override
-//	public void encerrar(Long idQuiz, String token) {
-//		LOGGER.info("Encerrando Quiz...");
-//		
-//		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(idQuiz, token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado"));
-//		quiz.encerra();
-//		quizRepository.save(quiz);
-//		
-//		LOGGER.info("Quiz encerrado com sucesso!");
-//	}
-//
-//	@Override
-//	public List<RankeadoVO> getRankeados() {
-//		return quizBusinessObject.getRankeados();
-//	}
-//}
-//

@@ -19,44 +19,6 @@ class QuizBusinessObjectTest {
 	}
 
 }
-
-//
-//package br.com.andersonpiotto.letscode.moviesbattle.bo;
-//
-//import java.util.ArrayList;
-//import java.util.Arrays;
-//import java.util.Collections;
-//import java.util.Comparator;
-//import java.util.Iterator;
-//import java.util.List;
-//import java.util.Objects;
-//import java.util.Optional;
-//import java.util.Random;
-//
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
-//import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.stereotype.Component;
-//
-//import br.com.andersonpiotto.letscode.moviesbattle.client.FilmeClientImpl;
-//import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeAvaliadoDTO;
-//import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeDTO;
-//import br.com.andersonpiotto.letscode.moviesbattle.dto.ListFilmesDTO;
-//import br.com.andersonpiotto.letscode.moviesbattle.dto.RespostaQuizRequestDTO;
-//import br.com.andersonpiotto.letscode.moviesbattle.model.Pergunta;
-//import br.com.andersonpiotto.letscode.moviesbattle.model.Quiz;
-//import br.com.andersonpiotto.letscode.moviesbattle.model.Resposta;
-//import br.com.andersonpiotto.letscode.moviesbattle.model.Usuario;
-//import br.com.andersonpiotto.letscode.moviesbattle.repository.QuizRepository;
-//import br.com.andersonpiotto.letscode.moviesbattle.repository.UsuarioRepository;
-//import br.com.andersonpiotto.letscode.moviesbattle.vo.RankeadoVO;
-//
-///** Classe que encapsula as regras de negócio do quiz
-// * 
-// * @author Anderson Piotto
-// * @version 1.0.0
-// * @since 20/03/2022
-// */
 //
 //@Component
 //public class QuizBusinessObject {
