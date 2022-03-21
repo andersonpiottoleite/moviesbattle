@@ -61,7 +61,7 @@ class QuizBusinessTest {
 
 	@BeforeEach
 	void antesDeCadaTeste() {
-		// TODO para deixar o teste caracterizado com teste de unidade (teste unitario), 
+		// TODO para deixar o teste caracterizado com teste de unidade (teste unitario), para essa classe Business Test
 		// pode ser usado a biblioteca do mockito, para relaizar mocks dos metodos dos repositorys e seus valores retornados,
 		// assim não será necessário à base de dados.
 		
