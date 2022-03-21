@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import br.com.andersonpiotto.letscode.moviesbattle.bo.QuizBusinessObject;
+import br.com.andersonpiotto.letscode.moviesbattle.bo.QuizBusiness;
 import br.com.andersonpiotto.letscode.moviesbattle.client.FilmeClientImpl;
 import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeAvaliadoDTO;
 import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeDTO;
@@ -38,7 +38,7 @@ public class QuizServiceImpl implements QuizService {
 	private static Logger LOGGER = LoggerFactory.getLogger(QuizService.class);
 	
 	@Autowired
-	private QuizBusinessObject quizBusinessObject;
+	private QuizBusiness quizBusiness;
 	
 	@Autowired
 	private QuizRepository quizRepository;
@@ -54,14 +54,14 @@ public class QuizServiceImpl implements QuizService {
 	
 	/** Construtor usado para testes
 	 * 
-	 * @param quizBusinessObject
+	 * @param quizBusiness
 	 * @param quizRepository
 	 * @param usuarioService
 	 * @param perguntaRepository
 	 * @param filmeClient
 	 */
-	public QuizServiceImpl(QuizBusinessObject quizBusinessObject, QuizRepository quizRepository, UsuarioServiceImpl usuarioService, PerguntaRepository perguntaRepository, FilmeClientImpl filmeClient) {
-		this.quizBusinessObject = quizBusinessObject;
+	public QuizServiceImpl(QuizBusiness quizBusiness, QuizRepository quizRepository, UsuarioServiceImpl usuarioService, PerguntaRepository perguntaRepository, FilmeClientImpl filmeClient) {
+		this.quizBusiness = quizBusiness;
 		this.quizRepository = quizRepository;
 		this.usuarioService = usuarioService;
 		this.perguntaRepository = perguntaRepository;
@@ -75,7 +75,7 @@ public class QuizServiceImpl implements QuizService {
 	public QuizResponseVO iniciar(String temaFilme, String token) {
 		LOGGER.info("Criando Quiz...");
 		
-		List<FilmeDTO> filmes = quizBusinessObject.getFilmesAleatorios(temaFilme);
+		List<FilmeDTO> filmes = quizBusiness.getFilmesAleatorios(temaFilme);
 		FilmeDTO primeiroFilme = filmes.get(0);
 		FilmeDTO segundoFilme = filmes.get(1);
 		
@@ -114,21 +114,21 @@ public class QuizServiceImpl implements QuizService {
 	public Quiz responder(RespostaQuizRequestDTO respostaQuizRequest, String token) {
 		LOGGER.info("Repondendo pergunta...");
 		
-		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(respostaQuizRequest.getIdQuiz(), token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado"));
+		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(respostaQuizRequest.getIdQuiz(), token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado para esse id e token"));
 		
-		Pergunta pergunta = perguntaRepository.findById(respostaQuizRequest.getIdPergunta()).orElseThrow(() -> new IllegalArgumentException("Pergunta não encontrada"));
+		Pergunta pergunta = perguntaRepository.findById(respostaQuizRequest.getIdPergunta()).orElseThrow(() -> new IllegalArgumentException("Pergunta não encontrada para esse id"));
 		
-		quizBusinessObject.validaCondicoesResposta(respostaQuizRequest, quiz, pergunta);
+		quizBusiness.validaCondicoesResposta(respostaQuizRequest, quiz, pergunta);
 		
 		FilmeAvaliadoDTO filmeAvaliado1 = filmeClient.getFilmesPorImdbID(pergunta.getPrimeiraOpcaoImdbID());
 		FilmeAvaliadoDTO filmeAvaliado2 = filmeClient.getFilmesPorImdbID(pergunta.getSegundaOpcaoImdbID());
 		
-		FilmeAvaliadoDTO melhorFilmeAvaliado = quizBusinessObject.getMelhorAvaliado(filmeAvaliado1, filmeAvaliado2);
+		FilmeAvaliadoDTO melhorFilmeAvaliado = quizBusiness.getMelhorAvaliado(filmeAvaliado1, filmeAvaliado2);
 		
 		Resposta resposta = new Resposta();
 		resposta.setImdbIDRespondido(respostaQuizRequest.getImdbIDRespondido());
 		
-		quizBusinessObject.verificaRespostaCorreta(quiz, melhorFilmeAvaliado, pergunta, resposta);
+		quizBusiness.verificaRespostaCorreta(quiz, melhorFilmeAvaliado, pergunta, resposta);
 		
 		Quiz quizRespondido = quizRepository.save(quiz);
 		
@@ -142,20 +142,20 @@ public class QuizServiceImpl implements QuizService {
 	public QuizResponseVO novaPergunta(Long idQuiz, String temaFilme, String token) {
 		LOGGER.info("Criando nova pergunta no Quiz...");
 		
-		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(idQuiz, token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado"));
+		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(idQuiz, token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado para esse id e token"));
 		
-		quizBusinessObject.validaCondicoesNovaPergunta(quiz);
+		quizBusiness.validaCondicoesNovaPergunta(quiz);
 				
 		List<FilmeDTO> filmes = null;
 		FilmeDTO primeiroFilme = null;
 		FilmeDTO segundoFilme = null;
 		
 		do {
-			filmes = quizBusinessObject.getFilmesAleatorios(temaFilme);
+			filmes = quizBusiness.getFilmesAleatorios(temaFilme);
 			primeiroFilme = filmes.get(0);
 			segundoFilme = filmes.get(1);
 			
-		} while(quizBusinessObject.combinacaoFilmesJaUsada(quiz, primeiroFilme, segundoFilme));
+		} while(quizBusiness.combinacaoFilmesJaUsada(quiz, primeiroFilme, segundoFilme));
 		
 		adicionaPergunta(primeiroFilme, segundoFilme, quiz);
 		
@@ -173,7 +173,7 @@ public class QuizServiceImpl implements QuizService {
 	public QuizResponseVO getPergunta(Long idPergunta) {
 		LOGGER.info("Pesquisando pergunta...");
 		
-		Pergunta pergunta = perguntaRepository.findById(idPergunta).orElseThrow(() -> new IllegalArgumentException("Pergunta não encontrada"));
+		Pergunta pergunta = perguntaRepository.findById(idPergunta).orElseThrow(() -> new IllegalArgumentException("Pergunta não encontrada para esse id"));
 		
 		FilmeAvaliadoDTO filmeAvaliado1 = filmeClient.getFilmesPorImdbID(pergunta.getPrimeiraOpcaoImdbID());
 		FilmeAvaliadoDTO filmeAvaliado2 = filmeClient.getFilmesPorImdbID(pergunta.getSegundaOpcaoImdbID());
@@ -187,7 +187,7 @@ public class QuizServiceImpl implements QuizService {
 	public Quiz encerrar(Long idQuiz, String token) {
 		LOGGER.info("Encerrando Quiz...");
 		
-		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(idQuiz, token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado"));
+		Quiz quiz = quizRepository.findAllByIdAndUsuario_Token(idQuiz, token).orElseThrow(() -> new IllegalArgumentException("Quiz não encontrado para esse id e token"));
 		quiz.encerra();
 		
 		Quiz quizEncerrado = quizRepository.save(quiz);
@@ -200,6 +200,6 @@ public class QuizServiceImpl implements QuizService {
 
 	@Override
 	public List<RankeadoVO> getRankeados() {
-		return quizBusinessObject.getRankeados();
+		return quizBusiness.getRankeados();
 	}
 }

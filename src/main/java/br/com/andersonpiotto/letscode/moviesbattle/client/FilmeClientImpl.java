@@ -54,10 +54,6 @@ public class FilmeClientImpl implements FilmeClient{
 			
 			ListFilmesDTO filmes = result.getBody();
 			
-			if (! filmes.getResponse()) {
-				throw new IntegracaoException("Nenhum filme encontrado com o tema " + temaFilme);
-			}
-			
 			LOGGER.info("Integração com o serviço da omdbapi na uri: " + uri + " realizado com sucesso!");
 			
 			return filmes;

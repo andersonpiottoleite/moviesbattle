@@ -10,6 +10,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import br.com.andersonpiotto.letscode.moviesbattle.dto.UsuarioDTO;
 import br.com.andersonpiotto.letscode.moviesbattle.exception.AutenticationException;
@@ -26,6 +27,7 @@ import br.com.andersonpiotto.letscode.moviesbattle.vo.UsuarioVO;
  */
 
 @DataJpaTest
+@ActiveProfiles("test")
 class UsuarioServiceImplTest {
 
 	private UsuarioServiceImpl usuarioService;

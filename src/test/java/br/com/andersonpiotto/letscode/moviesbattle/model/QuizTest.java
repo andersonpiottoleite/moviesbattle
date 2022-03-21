@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.context.ActiveProfiles;
 
 /**
  * Classe de testes para <code>Quiz</code>
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
  * @since 21/03/2022
  */
 
+@ActiveProfiles("test")
 class QuizTest {
 
 	private Quiz quiz = null;

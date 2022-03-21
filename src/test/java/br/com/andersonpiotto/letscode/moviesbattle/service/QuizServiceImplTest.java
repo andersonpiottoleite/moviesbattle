@@ -12,9 +12,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestTemplate;
 
-import br.com.andersonpiotto.letscode.moviesbattle.bo.QuizBusinessObject;
+import br.com.andersonpiotto.letscode.moviesbattle.bo.QuizBusiness;
 import br.com.andersonpiotto.letscode.moviesbattle.client.FilmeClientImpl;
 import br.com.andersonpiotto.letscode.moviesbattle.dto.RespostaQuizRequestDTO;
 import br.com.andersonpiotto.letscode.moviesbattle.dto.UsuarioDTO;
@@ -36,16 +37,11 @@ import br.com.andersonpiotto.letscode.moviesbattle.vo.UsuarioVO;
  */
 
 @DataJpaTest
+@ActiveProfiles("test")
 class QuizServiceImplTest {
-	
-	private QuizServiceImpl quizService;
 	
 	@Autowired
 	private QuizRepository quizRepository;
-	
-	private QuizBusinessObject quizBusinessObject;
-	
-	private FilmeClientImpl filmeClient;
 	
 	@Autowired
 	private PerguntaRepository perguntaRepository;
@@ -53,15 +49,21 @@ class QuizServiceImplTest {
 	@Autowired
 	private UsuarioRepository usuarioRepository;
 	
+	private QuizServiceImpl quizService;
+	
 	private UsuarioServiceImpl usuarioService;
+	
+	private QuizBusiness quizBusiness;
+	
+	private FilmeClientImpl filmeClient;
+	
 
 	@BeforeEach
 	void antesDeCadaTeste() {
 		usuarioService = new UsuarioServiceImpl(usuarioRepository);
-		
 		filmeClient = new FilmeClientImpl(new RestTemplate());
-		quizBusinessObject = new QuizBusinessObject(filmeClient, quizRepository, usuarioRepository);
-		quizService = new QuizServiceImpl(quizBusinessObject, quizRepository, usuarioService, perguntaRepository, filmeClient);
+		quizBusiness = new QuizBusiness(filmeClient, quizRepository, usuarioRepository);
+		quizService = new QuizServiceImpl(quizBusiness, quizRepository, usuarioService, perguntaRepository, filmeClient);
 	}
 
 	@Test
@@ -237,6 +239,7 @@ class QuizServiceImplTest {
 		
 		assertNotNull(rankeados);
 		assertTrue(rankeados.size() == 2);
+		assertTrue(rankeados.get(0).getPosicaoRanking() != rankeados.get(1).getPosicaoRanking());
 	}
 	
 	@Test
@@ -249,13 +252,6 @@ class QuizServiceImplTest {
 		Quiz quiz = quizService.encerrar(quizResponseVO.getIdQuiz(), usuario.getToken());
 		
 		assertEquals(quiz.isEncerrado(), true);
-	}
-	
-	private UsuarioVO criaUsuario() {
-		UsuarioDTO usuarioDTO = new UsuarioDTO();
-		usuarioDTO.setUsername("Anderson Piotto");
-		UsuarioVO usuarioCriado = usuarioService.cria(usuarioDTO);
-		return usuarioCriado;
 	}
 	
 	private QuizResponseVO criaQuiz() {
@@ -272,6 +268,13 @@ class QuizServiceImplTest {
 		String token = usuario.getToken();
 		QuizResponseVO quizResponseVO = quizService.iniciar(temaFilme, token);
 		return quizResponseVO;
+	}
+	
+	private UsuarioVO criaUsuario() {
+		UsuarioDTO usuarioDTO = new UsuarioDTO();
+		usuarioDTO.setUsername("Anderson Piotto");
+		UsuarioVO usuarioCriado = usuarioService.cria(usuarioDTO);
+		return usuarioCriado;
 	}
 
 }
