@@ -12,6 +12,8 @@ import br.com.andersonpiotto.letscode.moviesbattle.model.Usuario;
  * @since 19/03/2022
  */
 @Repository
-public interface UsuarioRepository extends CrudRepository<Usuario, Long>{
+public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
+	
+	Usuario findByToken(String token);
 
 }

@@ -2,7 +2,6 @@ package br.com.andersonpiotto.letscode.moviesbattle.vo;
 
 import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeAvaliadoDTO;
 import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeDTO;
-import lombok.Data;
 
 
 /** Classe que representa um View Object para Filmes
@@ -12,7 +11,6 @@ import lombok.Data;
  * @since 19/03/2022
  */
 
-@Data
 public class ResumoFilmeVO {
 
 	private String titulo;

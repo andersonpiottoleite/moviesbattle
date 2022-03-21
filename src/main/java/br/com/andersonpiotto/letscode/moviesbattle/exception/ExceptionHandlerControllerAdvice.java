@@ -39,4 +39,11 @@ public class ExceptionHandlerControllerAdvice extends ResponseEntityExceptionHan
     return new ResponseEntity<ErrorMessage>(message, HttpStatus.BAD_REQUEST);
   }
   
+  @ExceptionHandler(AutenticationException.class)
+  public @ResponseBody ResponseEntity<ErrorMessage> resourceAutenticationException(AutenticationException ex, WebRequest request) {
+    ErrorMessage message = new ErrorMessage(ex.getMessage());
+    
+    return new ResponseEntity<ErrorMessage>(message, HttpStatus.FORBIDDEN);
+  }
+  
 }

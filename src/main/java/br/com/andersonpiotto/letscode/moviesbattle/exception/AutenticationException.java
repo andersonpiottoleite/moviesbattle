@@ -8,12 +8,12 @@ package br.com.andersonpiotto.letscode.moviesbattle.exception;
  * @since 19/03/2022
  */
 @SuppressWarnings("serial")
-public class IntegracaoException extends RuntimeException {
+public class AutenticationException extends RuntimeException {
 	
-	public IntegracaoException() {
+	public AutenticationException() {
 	}
 	
-	public IntegracaoException(String msg) {
+	public AutenticationException(String msg) {
 		super(msg);
 	}
 

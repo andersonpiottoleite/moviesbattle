@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import br.com.andersonpiotto.letscode.moviesbattle.client.FilmeClient;
+import br.com.andersonpiotto.letscode.moviesbattle.client.FilmeClientImpl;
 import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeAvaliadoDTO;
 import br.com.andersonpiotto.letscode.moviesbattle.dto.FilmeDTO;
 import br.com.andersonpiotto.letscode.moviesbattle.dto.ListFilmesDTO;
@@ -38,10 +38,10 @@ import br.com.andersonpiotto.letscode.moviesbattle.vo.RankeadoVO;
 @Component
 public class QuizBusinessObject {
 	
-	Logger logger = LoggerFactory.getLogger(QuizBusinessObject.class);
+	private static Logger LOGGER = LoggerFactory.getLogger(QuizBusinessObject.class);
 	
 	@Autowired
-	private FilmeClient filmeClient;
+	private FilmeClientImpl filmeClient;
 	
 	@Autowired
 	private QuizRepository quizRepository;
@@ -83,9 +83,7 @@ public class QuizBusinessObject {
 	
 
 	public void validaCondicoesResposta(RespostaQuizRequestDTO respostaQuizRequest, Quiz quiz, Pergunta pergunta) {
-		if (quiz.isEncerrado()) {
-			throw new IllegalArgumentException("Quiz Encerrado, abra um novo quiz!");
-		}
+		validaQuizEncerrado(quiz);
 		
 		if (pergunta.isRespondida()) {
 			throw new IllegalArgumentException("Pergunta já respondida, crie uma nova pergunta!");
@@ -99,7 +97,18 @@ public class QuizBusinessObject {
 		}
 	}
 	
-	public void existePerguntaNaoRespondida(Quiz quiz) {
+	public void validaCondicoesNovaPergunta(Quiz quiz) {
+		validaQuizEncerrado(quiz);
+		existePerguntaNaoRespondida(quiz);
+	}
+	
+	private void validaQuizEncerrado(Quiz quiz) {
+		if (quiz.isEncerrado()) {
+			throw new IllegalArgumentException("Quiz Encerrado, abra um novo quiz!");
+		}
+	}
+	
+	private void existePerguntaNaoRespondida(Quiz quiz) {
 		Optional<Pergunta> optional = quiz.getPerguntas().stream().filter( p -> Objects.isNull(p.getResposta())).findAny();
 		if (! optional.isEmpty()) {
 			throw new IllegalStateException("Existe uma Pergunta pendente de resposta! Responda a Pergunta: " + optional.get().getId());
@@ -114,14 +123,14 @@ public class QuizBusinessObject {
 			avaliacao1 = Double.parseDouble(filmeAvaliado1.getImdbRating());
 		} catch (Exception e) {
 			// pode vir "N/A" como avaliacao do IMBD
-			logger.error("Erro ao converter " + filmeAvaliado1.getImdbRating() + " para double");
+			LOGGER.error("Erro ao converter " + filmeAvaliado1.getImdbRating() + " para double");
 		}
 		
 		try {
 			avaliacao2 = Double.parseDouble(filmeAvaliado2.getImdbRating());
 		} catch (Exception e) {
 			// pode vir "N/A" como avaliacao do IMBD
-			logger.error("Erro ao converter " + filmeAvaliado2.getImdbRating() + " para double");
+			LOGGER.error("Erro ao converter " + filmeAvaliado2.getImdbRating() + " para double");
 		}
 		
 		return avaliacao1 > avaliacao2 ? filmeAvaliado1 : filmeAvaliado2;
@@ -145,15 +154,23 @@ public class QuizBusinessObject {
 	}
 	
 	public List<RankeadoVO> getRankeados() {
+		LOGGER.info("Gerando Ranking do Quiz...");
+		
 		List<RankeadoVO> rankeados = new ArrayList<RankeadoVO>();
 		
 		Iterator<Usuario> iterator = usuarioRepository.findAll().iterator();
+		
+		if (!iterator.hasNext()) {
+			throw new IllegalStateException("Não existem participantes para rankear!");
+		}
 		
 		preencheDadosBasicosRankeados(rankeados, iterator);
 		
 		ordenaRakeados(rankeados);
 		
 		setNumeroPosicaoRanking(rankeados);
+		
+		LOGGER.info("Ranking do Quiz Gerado!");
 		
 		return rankeados;
 	}
@@ -168,24 +185,35 @@ public class QuizBusinessObject {
 			 
 			 RankeadoVO rankeado = new RankeadoVO();
 			 
-           	 rankeado.setNome(usuario.getNome());
+           	 rankeado.setNome(usuario.getUsername());
            	 
-			 int quantidadeQuizes = quizes.size();
-			 rankeado.setQuantidadeDeQuizesRespondidos(quantidadeQuizes);
-			 
-			 int totalQuantidadeRespostasCorretas = quizes.stream()
-			 .mapToInt(q -> q.getQuantidadeRespostasCorretas())
-			 .sum();
-			 
-			 int totalRespostas = 0;
-			 
-			 for (Quiz quiz : quizes) {
-				 totalRespostas += quiz.getPerguntas().stream().filter(p -> p.isRespondida()).count();
-			 }
-			 
-			 int porcentagemAcerto = (totalQuantidadeRespostasCorretas * 100) / totalRespostas;
-			 
-			 rankeado.setPontuacao(quantidadeQuizes * porcentagemAcerto);
+           	 if (!quizes.isEmpty()) {
+           		 
+				 int quantidadeQuizes = quizes.size();
+				 rankeado.setQuantidadeDeQuizesRespondidos(quantidadeQuizes);
+				 
+				 int totalQuantidadeRespostasCertas = quizes.stream()
+				 .mapToInt(q -> q.getQuantidadeRespostasCorretas())
+				 .sum();
+				 rankeado.setQuantidadeTotalRepostasCertas(totalQuantidadeRespostasCertas);
+				 
+				 int totalRespostas = 0;
+				 for (Quiz quiz : quizes) {
+					 totalRespostas += quiz.getPerguntas().stream().filter(p -> p.isRespondida()).count();
+				 }
+				 
+				 rankeado.setQuantidadeTotalRespostas(totalRespostas);
+				 rankeado.setQuantidadeTotalRepostasErradas(totalRespostas - totalQuantidadeRespostasCertas);
+				 
+				 int porcentagemAcerto = 0;
+				 if (totalRespostas > 0) {
+					 porcentagemAcerto = (totalQuantidadeRespostasCertas * 100) / totalRespostas;
+				 }
+				 
+				 rankeado.setPorcentagemAcerto(porcentagemAcerto);
+				 
+				 rankeado.setPontuacao(quantidadeQuizes * porcentagemAcerto);
+           	 }
 			 
 			 rankeados.add(rankeado);
 		}
@@ -196,9 +224,9 @@ public class QuizBusinessObject {
 			
             public int compare(RankeadoVO r1,RankeadoVO r2){
             	if(r1.getPontuacao() > r2.getPontuacao()) {
-            		return 1;
-            	}else if(r1.getPontuacao() > r2.getPontuacao()) {
             		return -1;
+            	}else if(r1.getPontuacao() < r2.getPontuacao()) {
+            		return 1;
             	}
             	
             	return 0;

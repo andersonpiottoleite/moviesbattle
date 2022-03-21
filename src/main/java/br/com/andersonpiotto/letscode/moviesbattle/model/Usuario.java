@@ -5,7 +5,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-/** Classe que representa uma entidade usuario
+/**
+ * Classe que representa uma entidade usuario
  * 
  * @author Anderson Piotto
  * @version 1.0.0
@@ -14,18 +15,17 @@ import javax.persistence.Id;
 @Entity
 public class Usuario {
 
-	@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	private String login;
-	private String senha;
-	private String nome;
+	private String username;
+	private String token;
 
-	public Usuario(String login, String senha, String nome) {
-		this.login = login;
-		this.senha = senha;
-		this.nome = nome;
+	public Usuario(String username, String token) {
+		this.username = username;
+		this.token = token;
 	}
-	
+
 	public Usuario() {
 	}
 
@@ -33,28 +33,16 @@ public class Usuario {
 		return id;
 	}
 
-	public String getLogin() {
-		return login;
+	public String getUsername() {
+		return username;
 	}
 
-	public void setLogin(String login) {
-		this.login = login;
+	public void setUsername(String username) {
+		this.username = username;
 	}
 
-	public String getSenha() {
-		return senha;
+	public String getToken() {
+		return token;
 	}
-
-	public void setSenha(String senha) {
-		this.senha = senha;
-	}
-
-	public String getNome() {
-		return nome;
-	}
-
-	public void setNome(String nome) {
-		this.nome = nome;
-	}
-
+	
 }
