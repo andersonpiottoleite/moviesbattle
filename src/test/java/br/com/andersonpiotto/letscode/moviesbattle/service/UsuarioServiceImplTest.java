@@ -2,6 +2,7 @@ package br.com.andersonpiotto.letscode.moviesbattle.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -79,6 +80,17 @@ class UsuarioServiceImplTest {
 		assertNotNull(usuarioBuscadoPorToken);
 		assertEquals(usuarioCriado.getToken(), usuarioBuscadoPorToken.getToken());
 		assertEquals(usuarioCriado.getUsername(), usuarioBuscadoPorToken.getUsername());
+
+	}
+	
+	@Test
+	void deveRegerarUmTokenDiferente() {
+		UsuarioVO usuarioCriado = criaUsuario();
+		String tokenAntigo = usuarioCriado.getToken();
+		String novoToken = usuarioService.regerarToken(tokenAntigo);
+		
+		assertNotNull(novoToken);
+		assertFalse(novoToken.equals(tokenAntigo));
 
 	}
 

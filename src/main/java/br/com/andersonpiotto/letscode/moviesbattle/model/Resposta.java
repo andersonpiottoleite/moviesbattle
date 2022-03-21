@@ -1,5 +1,7 @@
 package br.com.andersonpiotto.letscode.moviesbattle.model;
 
+import java.util.Objects;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -39,6 +41,24 @@ public class Resposta {
 
 	public void setCorreta(Boolean correta) {
 		this.correta = correta;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(correta, id, imdbIDRespondido);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Resposta other = (Resposta) obj;
+		return Objects.equals(correta, other.correta) && Objects.equals(id, other.id)
+				&& Objects.equals(imdbIDRespondido, other.imdbIDRespondido);
 	}
 
 }

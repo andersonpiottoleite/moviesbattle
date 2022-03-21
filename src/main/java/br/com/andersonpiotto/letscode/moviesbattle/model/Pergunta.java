@@ -1,5 +1,7 @@
 package br.com.andersonpiotto.letscode.moviesbattle.model;
 
+import java.util.Objects;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -84,6 +86,26 @@ public class Pergunta {
 
 	public void respondida() {
 		this.respondida = true;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id, primeiraOpcaoImdbID, quiz, respondida, resposta, segundaOpcaoImdbID);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Pergunta other = (Pergunta) obj;
+		return Objects.equals(id, other.id) && Objects.equals(primeiraOpcaoImdbID, other.primeiraOpcaoImdbID)
+				&& Objects.equals(quiz, other.quiz) && respondida == other.respondida
+				&& Objects.equals(resposta, other.resposta)
+				&& Objects.equals(segundaOpcaoImdbID, other.segundaOpcaoImdbID);
 	}
 
 }

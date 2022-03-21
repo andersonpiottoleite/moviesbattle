@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import org.springframework.stereotype.Component;
 
@@ -28,7 +29,8 @@ public class JwtTokenUtil implements Serializable {
 	// Gera token para o usuario
 	public String generateToken(UsuarioDTO usuario) {
 		Map<String, Object> claims = new HashMap<>();
-		return doGenerateToken(claims, usuario.getUsername());
+		int acrescimoAleatorio = new Random().nextInt(5000);
+		return doGenerateToken(claims, usuario.getUsername() + acrescimoAleatorio);
 	}
 
 	// Cria o token

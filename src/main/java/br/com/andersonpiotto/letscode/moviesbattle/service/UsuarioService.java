@@ -18,5 +18,7 @@ public interface UsuarioService {
 	void autentica(String username);
 	
 	Usuario buscaPorToken(String token);
+	
+	String regerarToken(String tokenAntigo);
 
 }

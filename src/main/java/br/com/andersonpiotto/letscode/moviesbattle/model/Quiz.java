@@ -2,6 +2,7 @@ package br.com.andersonpiotto.letscode.moviesbattle.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -84,6 +85,26 @@ public class Quiz {
 
 	public void encerra() {
 		this.encerrado = true;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(encerrado, id, perguntas, quantidadeErros, quantidadeRespostasCorretas, usuario);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Quiz other = (Quiz) obj;
+		return encerrado == other.encerrado && Objects.equals(id, other.id)
+				&& Objects.equals(perguntas, other.perguntas) && quantidadeErros == other.quantidadeErros
+				&& quantidadeRespostasCorretas == other.quantidadeRespostasCorretas
+				&& Objects.equals(usuario, other.usuario);
 	}
 
 }

@@ -59,4 +59,14 @@ public class UsuarioServiceImpl implements UsuarioService {
 		return usuarioRepository.findByToken(token);
 	}
 
+	@Override
+	public String regerarToken(String tokenAntigo) {
+		Usuario usuario = buscaPorToken(tokenAntigo);
+		String novoToken = new JwtTokenUtil().generateToken(new UsuarioDTO(usuario.getUsername()));
+		usuario.setToken(novoToken);
+		usuario = usuarioRepository.save(usuario);
+		
+		return novoToken;
+	}
+
 }
